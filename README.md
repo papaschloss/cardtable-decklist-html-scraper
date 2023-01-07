@@ -1,0 +1,1 @@
+# cardtable-decklist-html-scraper
