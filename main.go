@@ -101,17 +101,13 @@ func main() {
 		fmt.Println()
 		co.Visit(query.Get("uri"))
 
-		jsonResult, err := json.Marshal(s)
-		if err != nil {
-			return c.HTML(http.StatusInternalServerError, "")
-		}
 		pretty, err := json.MarshalIndent(s, "", "    ")
 		if err != nil {
 			return c.HTML(http.StatusInternalServerError, "")
 		}
 		println(string(pretty))
 
-		return c.JSON(http.StatusOK, jsonResult)
+		return c.JSON(http.StatusOK, s)
 	})
 
 	e.GET("/ping", func(c echo.Context) error {
