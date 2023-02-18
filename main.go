@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,7 +19,7 @@ func main() {
 	e := echo.New()
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*.middle-earth.house", "*.card-table.app"},
+		AllowOrigins: []string{"*.middle-earth.house", "https://card-table.app"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 	e.Use(middleware.Logger())
@@ -44,12 +45,6 @@ func main() {
 		)
 
 		s := &searchInfo{Decks: make(map[string]*deckInfo)}
-
-		co.OnHTML("", func(h *colly.HTMLElement) {
-			// deckName := h.Text
-			// id := strings.Split(h.Attr("href"), "/")[3]
-			// s.Decks[id] = strings.Trim(deckName, " ")
-		})
 
 		co.OnHTML(".table > tbody > tr", func(h *colly.HTMLElement) {
 			link := h.DOM.Find("a[href^=\"/decklist/view/\"]").First()
@@ -115,11 +110,11 @@ func main() {
 		fmt.Println()
 		co.Visit(query.Get("uri"))
 
-		// pretty, err := json.MarshalIndent(s, "", "    ")
-		// if err != nil {
-		// return c.HTML(http.StatusInternalServerError, "")
-		// }
-		// println(string(pretty))
+		pretty, err := json.MarshalIndent(s, "", "    ")
+		if err != nil {
+			return c.HTML(http.StatusInternalServerError, "")
+		}
+		println(string(pretty))
 
 		return c.JSON(http.StatusOK, s)
 	})
