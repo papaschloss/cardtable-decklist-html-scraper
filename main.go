@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -50,6 +49,21 @@ func main() {
 			// deckName := h.Text
 			// id := strings.Split(h.Attr("href"), "/")[3]
 			// s.Decks[id] = strings.Trim(deckName, " ")
+		})
+
+		co.OnHTML(".table > tbody > tr", func(h *colly.HTMLElement) {
+			link := h.DOM.Find("a[href^=\"/decklist/view/\"]").First()
+
+			if len(link.Text()) == 0 {
+				return
+			}
+			deckName := link.Text()
+			id := strings.Split(link.AttrOr("href", "nothing/to/see//"), "/")[3]
+			if len(id) == 0 {
+				return
+			}
+
+			s.Decks[id] = &deckInfo{Name: deckName, Hero: "", By: "", Likes: 0}
 		})
 
 		co.OnHTML(".decklists > .box", func(h *colly.HTMLElement) {
@@ -101,11 +115,11 @@ func main() {
 		fmt.Println()
 		co.Visit(query.Get("uri"))
 
-		pretty, err := json.MarshalIndent(s, "", "    ")
-		if err != nil {
-			return c.HTML(http.StatusInternalServerError, "")
-		}
-		println(string(pretty))
+		// pretty, err := json.MarshalIndent(s, "", "    ")
+		// if err != nil {
+		// return c.HTML(http.StatusInternalServerError, "")
+		// }
+		// println(string(pretty))
 
 		return c.JSON(http.StatusOK, s)
 	})
