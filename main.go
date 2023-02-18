@@ -18,7 +18,7 @@ func main() {
 	e := echo.New()
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*.middle-earth.house"},
+		AllowOrigins: []string{"*.middle-earth.house", "*.card-table.app"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 	e.Use(middleware.Logger())
