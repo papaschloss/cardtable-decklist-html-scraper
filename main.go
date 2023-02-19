@@ -46,28 +46,12 @@ func main() {
 
 		s := &searchInfo{Decks: make(map[string]*deckInfo)}
 
-		co.OnHTML(".table > tbody > tr", func(h *colly.HTMLElement) {
+		parseData := func(h *colly.HTMLElement) {
 			link := h.DOM.Find("a[href^=\"/decklist/view/\"]").First()
 
 			if len(link.Text()) == 0 {
 				return
 			}
-			deckName := link.Text()
-			id := strings.Split(link.AttrOr("href", "nothing/to/see//"), "/")[3]
-			if len(id) == 0 {
-				return
-			}
-
-			s.Decks[id] = &deckInfo{Name: deckName, Hero: "", By: "", Likes: 0}
-		})
-
-		co.OnHTML(".decklists > .box", func(h *colly.HTMLElement) {
-			link := h.DOM.Find("a[href^=\"/decklist/view/\"]").First()
-
-			if len(link.Text()) == 0 {
-				return
-			}
-
 			deckName := link.Text()
 			id := strings.Split(link.AttrOr("href", "nothing/to/see//"), "/")[3]
 			if len(id) == 0 {
@@ -93,6 +77,14 @@ func main() {
 					s.Decks[id].Likes = likesInt
 				}
 			}
+		}
+
+		co.OnHTML(".table > tbody > tr", func(h *colly.HTMLElement) {
+			parseData(h)
+		})
+
+		co.OnHTML(".decklists > .box", func(h *colly.HTMLElement) {
+			parseData(h)
 
 		})
 
