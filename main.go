@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -36,6 +37,60 @@ func main() {
 		StatusCode int
 		Decks      map[string]*deckInfo
 	}
+
+	type variables struct {
+		DeckId int `json:"deckId"`
+	}
+
+	type rangersQuery struct {
+		OperationName string    `json:"operationName"`
+		Variables     variables `json:"variables"`
+		Query         string    `json:"query"`
+	}
+
+	e.GET("/rangersproxy", func(c echo.Context) error {
+
+		query := c.Request().URL.Query()
+
+		deckIdString := query.Get("deckId")
+		deckId, queryErr := strconv.Atoi(deckIdString)
+
+		if queryErr != nil {
+			return queryErr
+		}
+
+		//Encode the data
+		postBody, _ := json.Marshal(rangersQuery{
+			OperationName: "getDeck",
+			Variables:     variables{DeckId: deckId},
+			Query:         "query getDeck($deckId: Int!) {\n  deck: rangers_deck_by_pk(id: $deckId) {\n    ...DeckDetail\n    __typename\n  }\n}\n\nfragment DeckDetail on rangers_deck {\n  ...Deck\n  copy_count\n  comment_count\n  like_count\n  liked_by_user\n  original_deck {\n    deck {\n      id\n      name\n      user {\n        id\n        handle\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  campaign {\n    id\n    name\n    rewards\n    latest_decks {\n      deck {\n        id\n        slots\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  user {\n    handle\n    __typename\n  }\n  comments(order_by: {created_at: asc}, limit: 5) {\n    ...BasicDeckComment\n    __typename\n  }\n  __typename\n}\n\nfragment Deck on rangers_deck {\n  id\n  user_id\n  slots\n  side_slots\n  extra_slots\n  version\n  name\n  description\n  awa\n  spi\n  fit\n  foc\n  created_at\n  updated_at\n  meta\n  user {\n    ...UserInfo\n    __typename\n  }\n  published\n  previous_deck {\n    id\n    meta\n    slots\n    side_slots\n    version\n    __typename\n  }\n  next_deck {\n    id\n    meta\n    slots\n    side_slots\n    version\n    __typename\n  }\n  __typename\n}\n\nfragment UserInfo on rangers_users {\n  id\n  handle\n  __typename\n}\n\nfragment BasicDeckComment on rangers_comment {\n  id\n  user {\n    ...UserInfo\n    __typename\n  }\n  text\n  created_at\n  updated_at\n  response_count\n  comment_id\n  __typename\n}",
+		})
+
+		responseBody := bytes.NewBuffer(postBody)
+		resp, err := http.Post("https://gapi.rangersdb.com/v1/graphql", "application/json", responseBody)
+
+		if err != nil {
+			return err
+		}
+
+		defer resp.Body.Close()
+		var data map[string]interface{}
+
+		if resp.StatusCode == http.StatusOK {
+
+			bodyDecodeErr := json.NewDecoder(resp.Body).Decode(&data)
+			if bodyDecodeErr != nil {
+				log.Println(bodyDecodeErr)
+				return bodyDecodeErr
+			}
+
+			log.Println("")
+			temp, _ := json.Marshal(data)
+			log.Println(string(temp))
+		}
+
+		return c.JSON(http.StatusOK, data)
+	})
 
 	e.GET("/", func(c echo.Context) error {
 		query := c.Request().URL.Query()
