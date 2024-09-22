@@ -19,8 +19,18 @@ func main() {
 
 	e := echo.New()
 
+	// override AllowOrigins for CORS by setting an environment variable CORS_HOSTS.
+	// separate the URLs with ;
+	hosts, ok := os.LookupEnv("CORS_HOSTS");
+	hostsArr := []string{};
+	if ok {
+		hostsArr = strings.Split(hosts, ";")
+	} else {
+		hostsArr = []string{"*.middle-earth.house", "https://card-table.app"}
+	}
+
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*.middle-earth.house", "https://card-table.app"},
+		AllowOrigins: hostsArr,
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 	e.Use(middleware.Logger())
